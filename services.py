@@ -17,9 +17,9 @@ class GenericTaskService:
 
 
     @http('POST', '/tasks/assign')
-    def assign_task(self, request):
+    def add_task(self, request):
         db = Db()
-        created_task = db.assign_task(task)
+        created_task = db.add_task(task)
         return TaskSchema().dumps(created_task)
 
 
