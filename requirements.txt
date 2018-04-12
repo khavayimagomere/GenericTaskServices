@@ -1,0 +1,6 @@
+nameko
+sqlalchemy
+sqlalchemy_utils
+marshmallow
+marshmallow_sqlalchemy
+psycopg2-binary
