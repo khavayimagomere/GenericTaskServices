@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column, DateTime, ForeignKey, Integer, String, Float, Boolean, UniqueConstraint
 )
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 from sqlalchemy.engine.url import URL
 from sqlalchemy_utils import UUIDType
 from sqlalchemy import create_engine
@@ -10,8 +10,6 @@ from app.settings import DATABASE_CONFIG
 
 import datetime
 import uuid
-
-engine = create_engine(URL(**DATABASE_CONFIG))
 
 Base = declarative_base()
 
@@ -28,5 +26,10 @@ class Task(Base):
     completion_date = Column(DateTime, nullable = True)
     active = Column(Boolean, nullable = False, default = True)
 
-def create_all_tables(engine):
+
+def create_session():
+    engine = create_engine(URL(**DATABASE_CONFIG))
     Base.metadata.create_all(engine)
+    return scoped_session(sessionmaker(bind=engine))
+
+Session = create_session()

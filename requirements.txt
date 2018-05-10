@@ -3,4 +3,7 @@ sqlalchemy
 sqlalchemy_utils
 marshmallow
 marshmallow_sqlalchemy
-psycopg2-binary
+graphene
+graphene_sqlalchemy
+psycopg2-binary==2.7.4
+graphql-server-core

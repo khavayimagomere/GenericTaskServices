@@ -3,6 +3,6 @@ DATABASE_CONFIG = {
     'host': 'localhost',
     'port': '5432',
     'username':  'postgres',
-    'password':  'Mkokoan1.',
+    'password':  'vallarykhavayi',
     'database': 'tasks'
 }

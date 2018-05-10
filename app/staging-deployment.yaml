@@ -1,0 +1,105 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: generic-task-service-staging
+  namespace: default
+  labels:
+    #Project ID
+    app: generic-task-service
+spec:
+  #Run one instance of our application
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: generic-task-service
+    spec:
+      #Container details
+      containers:
+        - name: generic-task-service-app
+          image: gcr.io/twigadms/generic-task-service-staging:latest
+          env:
+            - name: DB_HOST
+              value: "127.0.0.1"
+
+            - name: DB_PORT
+              value: "5432"
+
+            - name: DB_NAME
+              value: "tasks"
+
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: db_user
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: db_password
+
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: redis_host
+
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: redis_port
+                  
+            - name: RABBIT_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: rabbit_host
+
+            - name: RABBIT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: rabbit_user
+
+            - name: RABBIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: rabbit_password
+
+            - name: RABBIT_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: rabbit_port
+
+            - name: RABBIT_MANAGEMENT_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: app-env-configs
+                  key: rabbit_management_port
+                  
+          imagePullPolicy: Always
+          #Ports to expose
+          ports:
+          - containerPort: 8080
+           
+        - name: generic-task-service-db-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          command: ["/cloud_sql_proxy",
+                  "-instances=twigadms:us-central1:dmsv2-staging=tcp:5432",
+                  "-credential_file=/secrets/cloudsql/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+          ports:
+          - containerPort: 5432
+      
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials

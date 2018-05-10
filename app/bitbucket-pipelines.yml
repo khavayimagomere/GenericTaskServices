@@ -1,0 +1,48 @@
+image: itskigen/alpine-gcloud-sdk
+
+pipelines:
+  branches:
+    develop:
+      - step: 
+          name: Deploy to Staging 
+          deployment: staging
+          script: 
+            # Read & decode authentication file. -> Instructions here: https://confluence.atlassian.com/bitbucket/deploy-to-google-cloud-900820342.html
+            - export TAG=$(git log -1 --pretty=%h)
+            - echo $GCLOUD_API_KEYFILE | base64 -d  > ./gcloud-api-key.json
+            - gcloud auth activate-service-account --key-file gcloud-api-key.json
+            - gcloud config set project $GCLOUD_PROJECT_TEST
+            - gcloud container clusters get-credentials $GCLOUD_CLUSTER_TEST --zone=$GCLOUD_ZONE_TEST --project $GCLOUD_PROJECT_TEST
+            - docker build -f Dockerfile --no-cache --rm=false -t gcr.io/$GCLOUD_PROJECT_TEST/generic-task-service-staging:$TAG  .
+            - gcloud docker -- push gcr.io/$GCLOUD_PROJECT_TEST/generic-task-service-staging:$TAG
+            #Intial run only.
+            - kubectl apply -f staging-deployment.yaml
+            - kubectl apply -f service.yaml
+            #Daily builds: 
+            - kubectl set image deployment/generic-task-service-staging generic-task-service-app=gcr.io/$GCLOUD_PROJECT_TEST/generic-task-service-staging:$TAG
+            - kubectl rollout status deployments generic-task-service-staging
+            
+          services:
+            - docker
+
+    master:
+      - step: 
+          name: Deploy to Production
+          deployment: production
+          script: 
+            # Read & decode authentication file. -> Instructions here: https://confluence.atlassian.com/bitbucket/deploy-to-google-cloud-900820342.html
+            - export TAG=$(git log -1 --pretty=%h)
+            - echo $GCLOUD_API_KEYFILE | base64 -d  > ./gcloud-api-key.json
+            - gcloud auth activate-service-account --key-file gcloud-api-key.json
+            - gcloud config set project $GCLOUD_PROJECT_TEST
+            - gcloud container clusters get-credentials $GCLOUD_CLUSTER_TEST --zone=$GCLOUD_ZONE_TEST --project $GCLOUD_PROJECT_TEST
+            - docker build -f Dockerfile --no-cache --rm=false -t gcr.io/$GCLOUD_PROJECT_TEST/generic-task-service-production:$TAG  .
+            - gcloud docker -- push gcr.io/$GCLOUD_PROJECT_TEST/generic-task-service-production:$TAG
+            #Intial run only.
+            - kubectl apply -f production-deployment.yaml
+            - kubectl apply -f service.yaml
+            #Daily builds: 
+            - kubectl set image deployment/generic-task-service-production generic-task-service-app=gcr.io/$GCLOUD_PROJECT_TEST/generic-task-service-production:$TAG
+            - kubectl rollout status deployments generic-task-service-production
+          services:
+            - docker
